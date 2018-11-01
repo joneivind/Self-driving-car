@@ -15,6 +15,8 @@ import math
 import PID
 import random
 import sys
+from scipy.spatial import Voronoi
+from scipy.interpolate import CubicSpline
 
 # Init PID controller
 pid = PID.PID(0.1, 0.01, 0.0)
@@ -175,7 +177,7 @@ def pipeline(image):
 				right_line_y.extend([y1, y2])
 
 	min_y = image.shape[0]/2 + image.shape[0]/8 # Just below the horizon
-	max_y = image.shape[0]-10 # The bottom of the image
+	max_y = image.shape[0] # The bottom of the image
 
 	poly_left = np.poly1d(np.polyfit(
 		left_line_y,
@@ -213,20 +215,79 @@ def pipeline(image):
 	for point in range(6) :
 		points.append((left_x_start + int(0.2*point*(left_x_end-left_x_start)), (max_y) + int(0.2*point*(min_y-max_y))))
 		points.append((right_x_start + int(0.2*point*(right_x_end-right_x_start)), (max_y) + int(0.2*point*(min_y-max_y))))
-		font = cv2.FONT_HERSHEY_SIMPLEX
-		cv2.putText(image, str(point),((left_x_start + int(0.2*point*(left_x_end-left_x_start))-40, (max_y) + int(0.2*point*(min_y-max_y))+5)), font, 0.7,(255,255,255),1,cv2.LINE_AA)
-		cv2.putText(image, str(point),((right_x_start + int(0.2*point*(right_x_end-right_x_start)+25), (max_y) + int(0.2*point*(min_y-max_y))+5)), font, 0.7,(255,255,255),1,cv2.LINE_AA)
+		#font = cv2.FONT_HERSHEY_SIMPLEX
+		#cv2.putText(image, str(point),((left_x_start + int(0.2*point*(left_x_end-left_x_start))-40, (max_y) + int(0.2*point*(min_y-max_y))+5)), font, 0.7,(255,255,255),1,cv2.LINE_AA)
+		#cv2.putText(image, str(point),((right_x_start + int(0.2*point*(right_x_end-right_x_start)+25), (max_y) + int(0.2*point*(min_y-max_y))+5)), font, 0.7,(255,255,255),1,cv2.LINE_AA)
 
+	'''
 	# Obstacle points
-	points.append((left_x_end + (left_x_start-left_x_end)/2 + 100, (min_y) + (max_y-min_y)/2))
+	points.append((left_x_end + (left_x_start-left_x_end)/2 + 200, (min_y) + (max_y-min_y)/2))
 	points.append((left_x_end + (left_x_start-left_x_end)/4 + 80, (min_y) + (max_y-min_y)/4))
-	#points.append((left_x_end + (left_x_start-left_x_end)/3 + 100, (min_y) + (max_y-min_y)/3))
-	#points.append((left_x_end + (left_x_start-left_x_end)/7 + 80, (min_y) + (max_y-min_y)/7))
+	points.append((left_x_end + (left_x_start-left_x_end)/3 + 100, (min_y) + (max_y-min_y)/3))
+	points.append((left_x_end + (left_x_start-left_x_end)/7 + 80, (min_y) + (max_y-min_y)/7))
+	'''
+
+
+
+
+
+
+	### Create voronoi path ###
+
+	rect2 = (left_x_start, left_x_end, right_x_end, right_x_start)
+
+	vor = Voronoi(points)
+	list_vertices = []
+
+	# Remove points out of bound
+	for vertice in vor.vertices:
+		v_point = ((int(round(vertice[1])), int(round(vertice[0]))))
+		if rect_contains(rect2, v_point):
+			list_vertices.append(v_point)
+
+	# Sort valid vertices list
+	list_vertices = sorted(list_vertices)
+
+	sorted_vertices = []
+	#print(list_vertices)
+	for item in list_vertices:
+		if sorted_vertices.count(item) == 0:
+			sorted_vertices.append(item)
+
+	#print(sorted_vertices)
+
+	# End position
+	x = [min_y]
+	y = [(left_x_end + (right_x_end-left_x_end)/2)]
+
+	for item in list_vertices:
+		#if x.count(item[0]) == 0 and y.count(item[1]) == 0:
+		x.append(item[0])
+		y.append(item[1])
+
+	# Start position
+	x.append(height+200)
+	y.append(width/2)
+	
+	
+	cs = CubicSpline(x, y)
+	cx = np.arange(x[0], x[-1], 1)
+	cy = cs(cx)
+
+	for p, _ in enumerate(cx):
+		cv2.circle(image, (int(round(cy[p])), int(round(cx[p]))), 1, (0,255,0), -1)
+	
+	for p in list_vertices:
+		cv2.circle(image, (p[1], p[0]), 5, (255,255,255), -1)
+
+
+
 
 	# Insert points into subdiv
 	for p in points :
 		subdiv.insert(p)
 
+	
 	# Allocate space for Voronoi Diagram
 	img_voronoi = np.zeros(image.shape, dtype = image.dtype)
 
@@ -235,8 +296,8 @@ def pipeline(image):
 
 	# Draw Voronoi diagram onto image
 	voronoi_diag_img = draw_voronoi(img_voronoi,subdiv)
-	cv2.addWeighted(voronoi_diag_img, opacity, image, 1 - opacity, 0, image)
-
+	#cv2.addWeighted(voronoi_diag_img, opacity, image, 1 - opacity, 0, image)
+	
 	# Draw delaunay triangles
 	#img_dela = draw_delaunay( image, subdiv, (255, 255, 255) )
 	#cv2.addWeighted(img_dela, opacity, image, 1 - opacity, 0, image)
@@ -261,11 +322,11 @@ def pipeline(image):
 		]],
 		thickness=2,
 	)
-
+	'''
 	# Draw zones between points
 	for point in range(6) :
 		cv2.line(line_image,(left_x_start + int(0.2*point*(left_x_end-left_x_start)), (max_y) + int(0.2*point*(min_y-max_y))), (right_x_start + int(0.2*point*(right_x_end-right_x_start)), (max_y) + int(0.2*point*(min_y-max_y))),(0,255,0),1)
-
+	'''
 	# Draw the points on the road lanes
 	for p in points :
 		draw_point(line_image, p, (0,255,0))
@@ -287,10 +348,10 @@ def pipeline(image):
 	pid_output = round(pid.update(offset_error),2)
 
     # Clear terminal and print
-	sys.stderr.write("\x1b[2J\x1b[H")
-	print('*** Path finder ***\n')
-	print('PID: ' + str(pid_output) + '\tError: ' + str(offset_error) + '\n')
-
+	#sys.stderr.write("\x1b[2J\x1b[H")
+	#print('*** Path finder ***\n')
+	#print('PID: ' + str(pid_output) + '\tError: ' + str(offset_error) + '\n')
+	print("\n")
 	# Print some data as text
 	font = cv2.FONT_HERSHEY_SIMPLEX
 	cv2.putText(line_image,"Error: " + str(-offset_error),(10,40), font, 0.8,(255,255,255),2,cv2.LINE_AA)
@@ -314,7 +375,7 @@ if __name__ == "__main__":
 	'''
 
 	# Get video file
-	cap = cv2.VideoCapture('solidYellowLeft.mp4')
+	cap = cv2.VideoCapture('../samples/solidYellowLeft.mp4')
 
 	# Check if camera opened successfully
 	if (cap.isOpened()== False): 
