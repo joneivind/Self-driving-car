@@ -212,20 +212,20 @@ def pipeline(image):
 	subdiv = cv2.Subdiv2D(rect);
 
 	# Add some point along the lanes
-	for point in range(6) :
-		points.append((left_x_start + int(0.2*point*(left_x_end-left_x_start)), (max_y) + int(0.2*point*(min_y-max_y))))
-		points.append((right_x_start + int(0.2*point*(right_x_end-right_x_start)), (max_y) + int(0.2*point*(min_y-max_y))))
+	for point in range(12) :
+		points.append((left_x_start + int(0.1*point*(left_x_end-left_x_start)), (max_y) + int(0.1*point*(min_y-max_y))))
+		points.append((right_x_start + int(0.1*point*(right_x_end-right_x_start)), (max_y) + int(0.1*point*(min_y-max_y))))
 		#font = cv2.FONT_HERSHEY_SIMPLEX
 		#cv2.putText(image, str(point),((left_x_start + int(0.2*point*(left_x_end-left_x_start))-40, (max_y) + int(0.2*point*(min_y-max_y))+5)), font, 0.7,(255,255,255),1,cv2.LINE_AA)
 		#cv2.putText(image, str(point),((right_x_start + int(0.2*point*(right_x_end-right_x_start)+25), (max_y) + int(0.2*point*(min_y-max_y))+5)), font, 0.7,(255,255,255),1,cv2.LINE_AA)
 
-	'''
+	
 	# Obstacle points
-	points.append((left_x_end + (left_x_start-left_x_end)/2 + 200, (min_y) + (max_y-min_y)/2))
-	points.append((left_x_end + (left_x_start-left_x_end)/4 + 80, (min_y) + (max_y-min_y)/4))
-	points.append((left_x_end + (left_x_start-left_x_end)/3 + 100, (min_y) + (max_y-min_y)/3))
-	points.append((left_x_end + (left_x_start-left_x_end)/7 + 80, (min_y) + (max_y-min_y)/7))
-	'''
+	#points.append((left_x_end + (left_x_start-left_x_end)/5 , (min_y) + (max_y-min_y)/2))
+	#points.append((left_x_end + (left_x_start-left_x_end)/4 + 50, (min_y) + (max_y-min_y)/4))
+	#points.append((left_x_end + (left_x_start-left_x_end)/3 + 50, (min_y) + (max_y-min_y)/3))
+	#points.append((left_x_end + (left_x_start-left_x_end)/2 + 50, (min_y) + (max_y-min_y)/2))
+	
 
 
 
@@ -243,42 +243,41 @@ def pipeline(image):
 	for vertice in vor.vertices:
 		v_point = ((int(round(vertice[1])), int(round(vertice[0]))))
 		if rect_contains(rect2, v_point):
-			list_vertices.append(v_point)
+		#if vertice[1] > 0 and vertice[1] < height and vertice[0] > 0 and vertice[0] < width:
+			for simplex in vor.ridge_vertices:
+				simplex = np.asarray(simplex)
+				if np.all(simplex >= 0):
+					list_vertices.append(v_point)
 
 	# Sort valid vertices list
 	list_vertices = sorted(list_vertices)
-
-	sorted_vertices = []
-	#print(list_vertices)
-	for item in list_vertices:
-		if sorted_vertices.count(item) == 0:
-			sorted_vertices.append(item)
-
-	#print(sorted_vertices)
 
 	# End position
 	x = [min_y]
 	y = [(left_x_end + (right_x_end-left_x_end)/2)]
 
 	for item in list_vertices:
-		#if x.count(item[0]) == 0 and y.count(item[1]) == 0:
-		x.append(item[0])
-		y.append(item[1])
+		if x.count(item[0]) == 0 and y.count(item[1]) == 0:
+			x.append(item[0])
+			y.append(item[1])
 
 	# Start position
-	x.append(height)
+	x.append(height+50)
 	y.append(width/2)
-	
+
 	
 	cs = CubicSpline(x, y)
 	cx = np.arange(x[0], x[-1], 1)
 	cy = cs(cx)
 
 	for p, _ in enumerate(cx):
-		cv2.circle(image, (int(round(cy[p])), int(round(cx[p]))), 1, (0,255,0), -1)
+		cv2.circle(image, (int(round(cy[p])), int(round(cx[p]))), 2, (255,255,255), -1)
 	
-	for p in list_vertices:
-		cv2.circle(image, (p[1], p[0]), 5, (255,255,255), -1)
+	#for p in list_vertices:
+	#	cv2.circle(image, (p[1], p[0]), 5, (255,255,255), -1)
+
+
+
 
 
 
@@ -295,8 +294,8 @@ def pipeline(image):
 	opacity = 0.3
 
 	# Draw Voronoi diagram onto image
-	voronoi_diag_img = draw_voronoi(img_voronoi,subdiv)
-	cv2.addWeighted(voronoi_diag_img, opacity, image, 1 - opacity, 0, image)
+	#voronoi_diag_img = draw_voronoi(img_voronoi,subdiv)
+	#cv2.addWeighted(voronoi_diag_img, opacity, image, 1 - opacity, 0, image)
 	
 	# Draw delaunay triangles
 	#img_dela = draw_delaunay( image, subdiv, (255, 255, 255) )
@@ -313,23 +312,26 @@ def pipeline(image):
 	cv2.fillPoly(overlay, pts =[contours], color=(0,255,0))
 	cv2.addWeighted(overlay, opacity, image, 1 - opacity, 0, image)
 
+
 	# Draw lane lines
-	line_image = draw_lines(
+	image = draw_lines(
 		image,
 		[[
 			[left_x_start, max_y, left_x_end, min_y],
 			[right_x_start, max_y, right_x_end, min_y],
 		]],
-		thickness=2,
+		thickness=5,
 	)
+
+
 	'''
 	# Draw zones between points
 	for point in range(6) :
 		cv2.line(line_image,(left_x_start + int(0.2*point*(left_x_end-left_x_start)), (max_y) + int(0.2*point*(min_y-max_y))), (right_x_start + int(0.2*point*(right_x_end-right_x_start)), (max_y) + int(0.2*point*(min_y-max_y))),(0,255,0),1)
 	'''
 	# Draw the points on the road lanes
-	for p in points :
-		draw_point(line_image, p, (0,255,0))
+	#for p in points :
+	#	draw_point(image, p, (0,255,0))
 
 
 	# Calculate offset error
@@ -354,11 +356,11 @@ def pipeline(image):
 	print("\n")
 	# Print some data as text
 	font = cv2.FONT_HERSHEY_SIMPLEX
-	cv2.putText(line_image,"Error: " + str(-offset_error),(10,40), font, 0.8,(255,255,255),2,cv2.LINE_AA)
-	cv2.putText(line_image,"PID out: " + str(pid_output),(10,80), font, 0.8,(255,255,255),2,cv2.LINE_AA)
+	cv2.putText(image,"Error: " + str(-offset_error),(10,40), font, 0.8,(255,255,255),2,cv2.LINE_AA)
+	cv2.putText(image,"PID out: " + str(pid_output),(10,80), font, 0.8,(255,255,255),2,cv2.LINE_AA)
 
 
-	return line_image
+	return image
 
 
 
