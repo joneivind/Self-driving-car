@@ -81,8 +81,8 @@ def draw_voronoi(img, subdiv) :
         cv2.polylines(img, ifacets, True, (255, 255, 0), 3)
         cv2.circle(img, (centers[i][0], centers[i][1]), 3, (0, 0, 0), 1)
 
-        for j in xrange(0,len(facets[i])) :
-            cv2.circle(img, (facets[i][j][0], facets[i][j][1]), 5, (0, 0, 255), -1)	
+        #for j in xrange(0,len(facets[i])) :
+        #    cv2.circle(img, (facets[i][j][0], facets[i][j][1]), 5, (0, 0, 255), -1)	
 
     return img
  
@@ -266,7 +266,7 @@ def pipeline(image):
 		y.append(item[1])
 
 	# Start position
-	x.append(height+200)
+	x.append(height)
 	y.append(width/2)
 	
 	
@@ -296,7 +296,7 @@ def pipeline(image):
 
 	# Draw Voronoi diagram onto image
 	voronoi_diag_img = draw_voronoi(img_voronoi,subdiv)
-	#cv2.addWeighted(voronoi_diag_img, opacity, image, 1 - opacity, 0, image)
+	cv2.addWeighted(voronoi_diag_img, opacity, image, 1 - opacity, 0, image)
 	
 	# Draw delaunay triangles
 	#img_dela = draw_delaunay( image, subdiv, (255, 255, 255) )
