@@ -39,6 +39,15 @@ def rect_contains(rect, point) :
         return False
     return True
 
+def perspective_transform(img) :
+    rows,cols,ch = img.shape
+    pts1 = np.float32([[150,540],[430,340],[540,340],[860,540]])
+    pts2 = np.float32([[150,540],[150,0],[860,0],[860,540]])
+    M = cv.getPerspectiveTransform(pts1,pts2)
+    dst = cv.warpPerspective(img,M,(300,300))
+
+    return dst
+
 # Draw delaunay triangles
 def draw_delaunay(img, subdiv, delaunay_color ) :
  
