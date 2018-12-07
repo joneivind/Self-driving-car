@@ -166,14 +166,9 @@ def reconstruct_path(came_from, start, goal):
     return path
 
 
-points = np.array([[-1, 0.5], [0, 1], [3, 3], [3, 1], [0.5, 2], [0.0, 2.5], [2.5, 0.5], [3.0, 0.0], [0.0, -1.0],
-                   [1, 0], [1, 3],
-                   [2, 0], [2, 3]])
-
-
-vor = Voronoi(points)
 
 '''
+### PARAMETERS ###
 vor.regions
 vor.max_bound
 vor.ndim
@@ -185,6 +180,14 @@ vor.point_region
 vor.points
 vor.vertices
 '''
+
+
+points = np.array([[-1, 0.5], [3, 3], [0.0, 2.5], [3.0, 0.0], [0.0, -1.0],
+                   [1, 0], [1, 3],
+                   [2, 0], [2, 3]])
+
+
+vor = Voronoi(points)
 
 # Draw infinity vertices
 center = points.mean(axis=0)
@@ -198,7 +201,6 @@ for pointidx, simplex in zip(vor.ridge_points, vor.ridge_vertices):
         midpoint = points[pointidx].mean(axis=0)
         far_point = vor.vertices[i] + np.sign(np.dot(midpoint - center, n)) * n * 1.2
         plt.plot([vor.vertices[i,0], far_point[0]], [vor.vertices[i,1], far_point[1]], '--', color=(0.8, 0.8, 0.8))
-
 
 g = Graph()
 
@@ -219,14 +221,13 @@ for i, vpair in enumerate(vor.ridge_vertices):
         #print("Point A: " + str(v0) + "\t\tPoint B: " + str(v1) + "\t\tDistance: "+ str(distance))
 
         # Draw a line from v0 to v1.
-        plt.plot([v0[0], v1[0]], [v0[1], v1[1]], color=(0, 0, 0), linewidth=3)
+        plt.plot([v0[0], v1[0]], [v0[1], v1[1]], color=(0, 0, 0), linewidth=2)
 
 # Draw points
-plt.plot(vor.points[:,0], vor.points[:, 1], 'o', ms=8)
+plt.plot(vor.points[:,0], vor.points[:, 1], 'o', ms=8, label='Road markers')
 
 # Mark the Voronoi vertices.
-plt.plot(vor.vertices[:,0], vor.vertices[:, 1], 'ro', ms=8)
-
+plt.plot(vor.vertices[:,0], vor.vertices[:, 1], 'ro', ms=8, label='Voronoi vertices')
 
 # Add nodes/vertecies
 for n in g_nodes:
@@ -238,49 +239,38 @@ for i, vpair in enumerate(vor.ridge_vertices):
         v0 = vor.vertices[vpair[0]]
         v1 = vor.vertices[vpair[1]]
 
-        distance = math.sqrt( (v1[0]-v0[0])**2 + (v1[1]-v0[1])**2 )
+        # Euclidean distance
+        e_distance = math.sqrt( (v1[0]-v0[0])**2 + (v1[1]-v0[1])**2 )
 
+        # Manhattan distance
         dx = v1[0] - v0[0]
         dy = v1[1] - v0[1]
         m_distance = abs(dx) + abs(dy)
 
-        g.add_edge((v0[0], v0[1]), (v1[0], v1[1]), distance)
-
-
-'''
-for i, v in enumerate(g):
-    for w in v.get_connections():
-        vid = v.get_id()
-        wid = w.get_id()
-        print(vid[0])
-        #print '(Node %d: %s -> %s, distance: %f)'  % (i, vid, wid, v.get_weight(w))
-'''
-# Connected nodes
-#for v in g:
-    #print 'g.vert_dict[%s]=%s' %(v.get_id(), g.vert_dict[v.get_id()])
-    #print(v.get_id())
-
-#print(g.get_cost('[0.5, 0.5]', '[1.5, 0.5]'))
-#print(g.vert_dict['[0.5, 0.5]'])
-
+        # Add egde to graph
+        g.add_edge((v0[0], v0[1]), (v1[0], v1[1]), e_distance)
 
 
 g_nodes = sorted(g_nodes)
 
 start, goal = (g_nodes[0][0], g_nodes[0][1]), (g_nodes[-1:][0][0], g_nodes[-1:][0][1])
-start = (0,0)
-goal = (2.5, 2)
+#start = (0,0)
+#goal = (2.5, 2)
 
 came_from, cost_so_far = a_star_search(g, start, goal)
 
 path = reconstruct_path(came_from, start, goal)
-print("A* path: ")
-print(path)
+print("Path: " + str(path))
 
 for l in path:
-    plt.plot(l[0], l[1], 'bo', ms=9)
+    plt.plot(l[0], l[1], 'bx', ms=12)
 
-plt.plot(start[0], start[1], 'o', ms=12)
-plt.plot(goal[0], goal[1], 'o', ms=12)
+# dummy for plotting label
+plt.plot(l[0], l[1], 'bx', ms=12, label='Path')
 
+plt.title('Voronoi diagram with A* path finder')
+plt.xlabel('x-axis')
+plt.ylabel('y-axis')
+plt.grid(True)
+plt.legend(loc='best')
 plt.show()

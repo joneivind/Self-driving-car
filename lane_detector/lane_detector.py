@@ -221,7 +221,7 @@ def pipeline(image):
 	subdiv = cv2.Subdiv2D(rect);
 
 	# Add some point along the lanes
-	for point in range(12) :
+	for point in range(11) :
 		points.append((left_x_start + int(0.1*point*(left_x_end-left_x_start)), (max_y) + int(0.1*point*(min_y-max_y))))
 		points.append((right_x_start + int(0.1*point*(right_x_end-right_x_start)), (max_y) + int(0.1*point*(min_y-max_y))))
 		#font = cv2.FONT_HERSHEY_SIMPLEX
@@ -279,8 +279,8 @@ def pipeline(image):
 	cx = np.arange(x[0], x[-1], 1)
 	cy = cs(cx)
 
-	for p, _ in enumerate(cx):
-		cv2.circle(image, (int(round(cy[p])), int(round(cx[p]))), 2, (255,255,255), -1)
+	#for p, _ in enumerate(cx):
+	#	cv2.circle(image, (int(round(cy[p])), int(round(cx[p]))), 2, (255,255,255), -1)
 	
 	#for p in list_vertices:
 	#	cv2.circle(image, (p[1], p[0]), 5, (255,255,255), -1)
@@ -300,7 +300,7 @@ def pipeline(image):
 	img_voronoi = np.zeros(image.shape, dtype = image.dtype)
 
 	#overlay_voronoi_diag = image.copy()
-	opacity = 0.3
+	opacity = 0.2
 
 	# Draw Voronoi diagram onto image
 	#voronoi_diag_img = draw_voronoi(img_voronoi,subdiv)
@@ -316,12 +316,12 @@ def pipeline(image):
 
 	# Add color to the road
 	overlay = image.copy()
-	opacity = 0.1
+	opacity = 0.5
 	contours = np.array( [ [left_x_start, max_y], [left_x_end, min_y], [right_x_end, min_y], [right_x_start, max_y] ] )
-	cv2.fillPoly(overlay, pts =[contours], color=(0,255,0))
+	cv2.fillPoly(overlay, pts =[contours], color=(210,223,0))
 	cv2.addWeighted(overlay, opacity, image, 1 - opacity, 0, image)
 
-
+	'''
 	# Draw lane lines
 	image = draw_lines(
 		image,
@@ -331,16 +331,16 @@ def pipeline(image):
 		]],
 		thickness=5,
 	)
-
+	'''
 
 	'''
 	# Draw zones between points
 	for point in range(6) :
-		cv2.line(line_image,(left_x_start + int(0.2*point*(left_x_end-left_x_start)), (max_y) + int(0.2*point*(min_y-max_y))), (right_x_start + int(0.2*point*(right_x_end-right_x_start)), (max_y) + int(0.2*point*(min_y-max_y))),(0,255,0),1)
+		cv2.line(image,(left_x_start + int(0.2*point*(left_x_end-left_x_start)), (max_y) + int(0.2*point*(min_y-max_y))), (right_x_start + int(0.2*point*(right_x_end-right_x_start)), (max_y) + int(0.2*point*(min_y-max_y))),(0,255,0),1)
 	'''
 	# Draw the points on the road lanes
-	#for p in points :
-	#	draw_point(image, p, (0,255,0))
+	for p in points :
+		draw_point(image, p, (210,223,0))
 
 
 	# Calculate offset error
@@ -348,12 +348,12 @@ def pipeline(image):
 	ref_point = width/2
 	offset_error = ref_point - center_point
 
-	'''
+	
 	# Show error point on image
-	cv2.line(line_image,(center_point,height-(max_y-min_y)/2),(ref_point,height-(max_y-min_y)/2),(255,0,0),2)
-	cv2.circle(line_image,(width/2, (min_y) + (max_y-min_y)/2), 8, (0,255,0), -1)
-	cv2.circle(line_image,(ref_point - offset_error, (min_y) + (max_y-min_y)/2), 8, (255,0,0), -1)
-	'''
+	cv2.line(image,(center_point,height-(max_y-min_y)/2),(ref_point,height-(max_y-min_y)/2),(255,255,255),2)
+	cv2.circle(image,(width/2, (min_y) + (max_y-min_y)/2), 8, (210,223,0), -1)
+	cv2.circle(image,(ref_point - offset_error, (min_y) + (max_y-min_y)/2), 8, (255,255,255), -1)
+	
 
 	# Update PID
 	pid_output = round(pid.update(offset_error),2)
@@ -361,7 +361,7 @@ def pipeline(image):
     # Clear terminal and print
 	#sys.stderr.write("\x1b[2J\x1b[H")
 	#print('*** Path finder ***\n')
-	#print('PID: ' + str(pid_output) + '\tError: ' + str(offset_error) + '\n')
+	print('PID: ' + str(pid_output) + '\tError: ' + str(offset_error) + '\n')
 	print("\n")
 	# Print some data as text
 	font = cv2.FONT_HERSHEY_SIMPLEX

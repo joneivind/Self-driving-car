@@ -32,8 +32,8 @@ def main():
 	cx = np.arange(x_lane_left[0], x_lane_left[-1], 0.01)
 	cy = cs(cx)
 
-	plt.plot(cx, cy, "-", label="lane_left")
-	plt.plot([i[0] for i in lane_left], [i[1] for i in lane_left], 'og')
+	plt.plot(cx, cy, "b-", label="Road lane")
+	plt.plot([i[0] for i in lane_left], [i[1] for i in lane_left], 'ob', ms=8)
 
 
 	# Interpolate right lane
@@ -46,8 +46,8 @@ def main():
 	cx = np.arange(x_lane_right[0], x_lane_right[-1], 0.01)
 	cy = cs(cx)
 
-	plt.plot(cx, cy, "-", label="lane_right")
-	plt.plot([i[0] for i in lane_right], [i[1] for i in lane_right], 'og')
+	plt.plot(cx, cy, "b-")
+	plt.plot([i[0] for i in lane_right], [i[1] for i in lane_right], 'ob', ms=8, label="Road marker")
 
 
 
@@ -59,8 +59,11 @@ def main():
 	# Remove points out of bound
 	for vertice in vor.vertices:
 		if vertice[1] <= min(y_lane_left) and vertice[1] >= max(y_lane_right) and vertice[0] >= 0:
-			plt.plot(vertice[0], vertice[1], 'or')
+			plt.plot(vertice[0], vertice[1], 'or', ms=8)
 			list_vertices.append((vertice[0], vertice[1]))
+
+	# dummy for plotting label
+	plt.plot(vertice[0], vertice[1], 'or', label="Voronoi edge")
 
 	# Sort valid vertices list
 	list_vertices = sorted(list_vertices)
@@ -74,14 +77,12 @@ def main():
 		y.append(item[1])
 
 	# End position
-	#x.append(2)
-	#y.append(0.5)
+	x.append(2.8)
+	y.append(0.7)
 		
 	cs = CubicSpline(x, y)
 	cx = np.arange(x[0], x[-1], .01)
 	cy = cs(cx)
-
-	#plt.plot(cx, cy, "-", label="path")
 
 	
 	# Remove dead ends
@@ -90,6 +91,7 @@ def main():
 		if np.all(simplex >= 0):
 			plt.plot(vor.vertices[simplex, 0], vor.vertices[simplex, 1], 'k-')
 	
+
 	
 	# Draw infinity vertices
 	center = points.mean(axis=0)
@@ -102,10 +104,18 @@ def main():
 			n = np.array([-t[1], t[0]]) # normal
 			midpoint = points[pointidx].mean(axis=0)
 			far_point = vor.vertices[i] + np.sign(np.dot(midpoint - center, n)) * n * 100
-			plt.plot([vor.vertices[i,0], far_point[0]], [vor.vertices[i,1], far_point[1]], 'k--')
+			plt.plot([vor.vertices[i,0], far_point[0]], [vor.vertices[i,1], far_point[1]], 'k--', color=(0.8, 0.8, 0.8))
 	
 	
 	plt.xlim(-1, 3); plt.ylim(-1, 3)
+
+	plt.plot(cx, cy, "r-", label="Path")
+
+	plt.title('Voronoi diagram with removed outliers')
+	plt.xlabel('x-axis')
+	plt.ylabel('y-axis')
+	plt.grid(True)
+	plt.legend(loc='best')
 	plt.show()
 
 if __name__ == "__main__":
