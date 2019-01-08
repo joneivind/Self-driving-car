@@ -234,11 +234,6 @@ def pipeline(image):
 	#points.append((left_x_end + (left_x_start-left_x_end)/4 + 50, (min_y) + (max_y-min_y)/4))
 	#points.append((left_x_end + (left_x_start-left_x_end)/3 + 50, (min_y) + (max_y-min_y)/3))
 	#points.append((left_x_end + (left_x_start-left_x_end)/2 + 50, (min_y) + (max_y-min_y)/2))
-	
-
-
-
-
 
 
 	### Create voronoi path ###
@@ -288,9 +283,6 @@ def pipeline(image):
 
 
 
-
-
-
 	# Insert points into subdiv
 	for p in points :
 		subdiv.insert(p)
@@ -303,8 +295,8 @@ def pipeline(image):
 	opacity = 0.2
 
 	# Draw Voronoi diagram onto image
-	#voronoi_diag_img = draw_voronoi(img_voronoi,subdiv)
-	#cv2.addWeighted(voronoi_diag_img, opacity, image, 1 - opacity, 0, image)
+	voronoi_diag_img = draw_voronoi(img_voronoi,subdiv)
+	cv2.addWeighted(voronoi_diag_img, opacity, image, 1 - opacity, 0, image)
 	
 	# Draw delaunay triangles
 	#img_dela = draw_delaunay( image, subdiv, (255, 255, 255) )
